@@ -1,0 +1,169 @@
+---
+title: "Bicycle Accidents in Great Britain (1979 to 2018)"
+author: "Mohammad Idris Attal"
+output: html_document
+---
+
+## Introduction
+
+In this project I will use the data-set regarding the Bicycle Accidents in Great Britain (1979 to 2018). This is a data-set of Bicycle accidents in Great Britain from 1970 to 2018 from road types, number of vehicles to casualties and so on. This data-set contains data such as the accident_index, number_of_vehicles_involved, number_of_casualties, date and time of accident, speed_limit, road_and_weather_conditions, day of the accident and finally the road_type in which the accident took place.
+
+The whole concept of using Bicycle Accidents in Great Britain (1979 to 2018) data-set is to analyze this data-set in different aspects such as analyzation based on number of casualties, number of vehicles, road conditions, road types and date and time of the accident.
+The formation and soundness of data analysis would be another important aspect to follow. To illustrate further it, we will try to handle the missing part of the data as well as the not provided part of the data to achieve the desire result that we want.
+In phase of Data exploration and visualization, I will follow all the required roles and conditions to visualize valid data in the meaningful manner with the respect to the terms and condition that we studied in this module.
+
+## Formation of the Data-set
+Accident_Index, Number_of_Vehicles, Number_of_Casualties, Date, Time, Speed_limit, Road_conditions, Weather_conditions, Day,Road_type, Light_conditions
+
+#1. Importing modules needed for the work
+
+```{r setup}
+library(ggplot2)
+library(tidyverse)
+library(lubridate)
+library(RColorBrewer)
+```
+
+
+## Reading the data-set of Bicycle Accidents in Great Britain (1979 to 2018)
+
+```{r}
+# Reading the data-set
+bicycleAccidents <- read.csv(file = 'Accidents.csv', stringsAsFactors = FALSE)
+```
+## Data Manipulation(Data-set Formation Changing) part 1
+We will use some techniques to change the data on a format which is meaningful for our use.
+
+# separate the date into three separate parts such as year, month and day
+```{r}
+# separate the date into three separate parts such as year, month and day
+bicycleAccidents <- separate(bicycleAccidents, Date, c("Date_Month", "Date_Day","Date_Year"))
+
+head(bicycleAccidents)
+```
+## Data Manipulation(Data-set Formation Changing) part 2
+In order to get the meaningful and best result, we will change the formation of our data, we do this by providing the group by functionality(group by data-set by month and year).
+
+```{r}
+bicycleAccidentsFinal<-group_by(bicycleAccidents,Date_Year,Date_Month)
+ summarise(bicycleAccidentsFinal,
+           Number_of_Vehicles=sum(Number_of_Vehicles),
+           Number_of_Casualties=sum(Number_of_Casualties),
+           Day=first(Day),Road_conditions=first(Road_conditions),
+           Speed_limit=first(Speed_limit), Road_type=first(Road_type),
+           Light_conditions=first(Light_conditions))
+```
+## Bicycle accidents casualties per year
+```{r}
+ggplot(data = bicycleAccidentsFinal, 
+       aes(x=Number_of_Casualties,y=Date_Year)) +
+   geom_col()+
+   ggtitle("bicycle accidents casualties per year") +
+   xlab("number of casualties") + ylab("year")
+```
+
+## Bicycle accidents by involved vehicles per year 
+```{r}
+ggplot(data = bicycleAccidentsFinal, 
+       aes(x=Number_of_Vehicles, y=Date_Year)) +
+   geom_col()+
+   ggtitle("bicycle accidents by involved vehicles per year") +
+   xlab("number of vehicles") + ylab("year")
+```
+
+## this part belong to a generic method for showing the price
+## in thousands as K and in millions as M and so on
+```{r}
+addUnits <- function(n) {
+  labels <- ifelse(n < 1000, n,  # less than thousands
+            ifelse(n < 1e6, paste0(round(n/1e3), 'k'),  # in thousands
+            ifelse(n < 1e9, paste0(round(n/1e6), 'M'),  # in millions
+            ifelse(n < 1e12, paste0(round(n/1e9), 'B'), # in billions
+            ))))
+  return(labels)
+}
+```
+
+## number of casualties of bicycle accidents based on the road conditions
+```{r}
+baRoadConditions<-
+  group_by(bicycleAccidents,Road_conditions)
+  summarise(baRoadConditions, 
+            Number_of_Casualties=sum(Number_of_Casualties))%>%
+ggplot(aes(x=Number_of_Casualties, y=Road_conditions, size=NULL,   color=Road_conditions)) +
+    geom_point()+
+    ggtitle("number of casualties based on road conditions") +
+    xlab("number of casualties") + ylab("road conditions")+
+    scale_x_continuous(labels = addUnits)
+```
+
+# number of casualties of bicycle accidents based on the road type
+```{r}
+baRoadTypes<-
+  group_by(bicycleAccidents,Road_type)
+  summarise(baRoadTypes,
+            Number_of_Casualties=sum(Number_of_Casualties))%>%
+ggplot(aes(x=Number_of_Casualties, y=Road_type, size=NULL,
+           color=Road_type)) +
+    geom_point()+
+    ggtitle("number of casualties based on road type") +
+    xlab("number of casualties") + ylab("road type")+
+    scale_x_continuous(labels = addUnits)
+```
+
+# number of casualties of bicycle accidents based on the light conditions
+```{r}
+baRoadTypes<-
+  group_by(bicycleAccidents,Light_conditions)
+  summarise(baRoadTypes,
+            Number_of_Casualties=sum(Number_of_Casualties))%>%
+ggplot(aes(x=Number_of_Casualties, y=Light_conditions, size=NULL,
+           color=Light_conditions)) +
+    geom_point()+
+    ggtitle("number of casualties based on light conditions") +
+    xlab("number of casualties") + ylab("light conditions")+
+    scale_x_continuous(labels = addUnits)
+```
+
+# number of casualties of bicycle accidents based on the months
+```{r}
+baMonths<-
+  group_by(bicycleAccidents,Date_Month)
+  summarise(baMonths,
+            Number_of_Casualties=sum(Number_of_Casualties))%>%
+ggplot(aes(x=Number_of_Casualties, y=Date_Month, size=NULL,
+           color=Date_Month)) +
+    geom_point()+
+    ggtitle("number of casualties based on months of the year") +
+    xlab("number of casualties") + ylab("months")+
+    scale_x_continuous(labels = addUnits)
+```
+
+## number of casualties of bicycle accidents based on the days of the week
+```{r}
+baWeekDays<-
+  group_by(bicycleAccidents,Day)
+  summarise(baWeekDays,
+            Number_of_Casualties=sum(Number_of_Casualties))%>%
+ggplot(aes(x=Number_of_Casualties, y=Day, size=NULL,   color=Day))+
+    geom_point()+
+    ggtitle("number of casualties based on the days of the week") +
+    xlab("number of casualties") + ylab("days of the week")+
+    scale_x_continuous(labels = addUnits)
+```
+
+## Total number of casualties and involved vehicles of bicycle accidents(all the time)
+```{r}
+baAcidentsAndCasulaties<-
+  group_by(bicycleAccidents)
+summarise(baAcidentsAndCasulaties, 
+          Number_of_Vehicles=sum(Number_of_Vehicles),
+          Number_of_Casualties=sum(Number_of_Casualties))%>%
+  ggplot(aes(x=Number_of_Casualties, y=Number_of_Vehicles,
+             color=NULL))+
+  geom_point(size = 4, alpha = 0.5)+
+  expand_limits(x = 0, y = 0)+
+  ggtitle("Total number of casualties and involved vehicles of bicycle accidents")+
+    xlab("number of casualties") + ylab("number of vehicles")
+```
+
